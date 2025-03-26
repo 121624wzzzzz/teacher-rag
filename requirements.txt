@@ -1,0 +1,13 @@
+cleantext==1.1.4
+huggingface_hub==0.29.3
+jieba==0.42.1
+langchain_community==0.3.20
+langchain_huggingface==0.1.2
+langchain_text_splitters==0.3.7
+llama_index==0.12.25
+nltk==3.9.1
+numpy==2.2.4
+rank_bm25==0.2.2
+Requests==2.32.3
+torch==2.6.0
+transformers==4.50.0
