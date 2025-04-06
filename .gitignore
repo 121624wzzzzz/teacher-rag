@@ -1,2 +1,11 @@
+# 忽略 BAAI/ 目录下的所有内容（但保留空目录）
+BAAI/*
+!BAAI/.gitkeep
+
+# 忽略 data/ 目录下的所有内容
+data/*
+!data/.gitkeep
+
+# 忽略 model/ 目录下的所有内容
 model/*
-data/*!.gitkeep
+!model/.gitkeep
