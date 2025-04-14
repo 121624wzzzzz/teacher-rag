@@ -28,10 +28,10 @@ title.text = "带图片的幻灯片"
 left = Inches(1)
 top = Inches(2)
 width = Inches(5)
-height(3)
+height = Inches(3)
 # 这里添加一个矩形代替图片（实际使用时可以替换为真实图片）
 pic = slide.shapes.add_shape(
-    1, left, top, width,)
+    1, left, top, width, height)
 pic.text = "[图片位置]"
 
 # 保存演示文稿
