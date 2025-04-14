@@ -1,14 +1,11 @@
 import os
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'  # 设置镜像源
-import sys
-from pathlib import Path
-
-# 获取项目根目录
-PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.append(str(PROJECT_ROOT))
-
 import logging
+from pathlib import Path
 from src.core.rag_retriever import RAGRetriever
+
+# 定义项目根目录（用于构建路径）
+PROJECT_ROOT = Path(__file__).parent.parent
 
 # 配置日志
 logging.basicConfig(level=logging.INFO,
