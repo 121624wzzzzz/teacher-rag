@@ -59,7 +59,7 @@ class OptimizedHybridSplitter:
         text = re.sub(r'([a-zA-Z])([\u4e00-\u9fa5])', r'\1 \2', text)
         return text.strip()
 
-    @lru_cache(maxsize=5000)
+
     def _bert_embedding(self, text):
         inputs = tokenizer(text, 
                           return_tensors="pt", 
