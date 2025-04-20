@@ -28,7 +28,7 @@ def main():
             bg_transparency=args.transparency,
             output_dir=args.output_dir
         )
-        
+        print(f"\n✓ PPT生成完成: {ppt_path}")
     
     except Exception as e:
         print(f"\n✗ 生成PPT时出错: {e}")
