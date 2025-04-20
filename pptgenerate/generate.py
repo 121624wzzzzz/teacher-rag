@@ -16,7 +16,7 @@ class LLMConfig:
 
 def get_expected_structure() -> Dict[str, Any]:
     """从外部JSON文件加载模板结构"""
-    template_path = os.path.join("ppt4161", "slide_prompt_template.json")
+    template_path = os.path.join("pptgenerate", "slide_prompt_template.json")
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -133,10 +133,10 @@ def generate_and_validate_json(topic: str, stream: bool = False) -> Optional[Dic
     
     请根据此结构，为主题"{topic}"创建内容。
     请确保内容准确、专业，围绕"{topic}"进行全面阐述。
-    JSON格式必须严格遵守，不要出现格式错误。
-    每个幻灯片必须包含type字段。
-    常见的幻灯片类型有: cover（封面）, toc（目录）, section（章节）, content（内容）, 
-    timeline（时间线）, comparison（比较）, thank_you（感谢）等,其中cover（封面）, toc（目录），thank_you（感谢）等是全文的
+    JSON格式必须严格遵守，不要出现格式错误，这非常重要。
+    每个幻灯片必须包含type字段，键名不要随意更改。
+    常见的幻灯片类型有: cover（封面）, toc（目录）, section（章节）, content（内容）, timeline（时间线）, comparison（比较）, thank_you（感谢）等,
+    其中cover（封面）, toc（目录），thank_you（感谢）等是全文的，
     section（章节）, content（内容）, timeline（时间线）, comparison（比较）则是用来讲述各个模块内容的组成页。
     """
     

@@ -1,6 +1,7 @@
+#mainppt.py
 import json
 import os
-from ppt4161.testend import generate_ppt_from_content
+from pptgenerate.testend import generate_ppt_from_content
 from datetime import datetime
 
 def save_json_to_file(json_data: dict, filename: str = None) -> str:
@@ -23,7 +24,7 @@ def generate_ppt_from_topic(topic: str, stream: bool = False) -> str:
     """
     从主题生成PPT的完整流程
     """
-    from ppt4161.generate import generate_and_validate_json
+    from pptgenerate.generate import generate_and_validate_json
     
     # 1. 生成JSON内容
     print(f"\n正在为主题 '{topic}' 生成内容结构...")

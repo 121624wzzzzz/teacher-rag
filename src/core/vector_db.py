@@ -1,4 +1,3 @@
-
 #vector_db.py - 本地文本向量化及索引管理模块
 import os
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'  # 优先使用镜像

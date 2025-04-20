@@ -1,6 +1,5 @@
 import os
 os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'  # 设置镜像源
-
 import logging
 from typing import List, Dict, Tuple, Optional
 import numpy as np
