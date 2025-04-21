@@ -2,8 +2,8 @@
 import os
 import json
 from datetime import datetime
-from .generate import generate_and_validate_json
-from .testend import generate_ppt_from_content
+from .generatecontent import generate_and_validate_json
+from .generateppt import generate_ppt_from_content
 
 def save_json_to_file(json_data: dict, filename: str = None) -> str:
     """将JSON数据保存到文件"""

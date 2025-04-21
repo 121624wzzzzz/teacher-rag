@@ -1,108 +1,7 @@
-import os
-import json
-import sys
-import requests
-from dotenv import load_dotenv
-from pathlib import Path
 import logging
-from typing import Dict, List, Optional, Generator, Union, Any
+from typing import Dict, List, Optional, Generator, Any
 from dataclasses import dataclass
-
-# 环境配置
-load_dotenv()
-os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
-
-# 配置日志
-logging.basicConfig(level=logging.INFO,
-                format="%(asctime)s - %(levelname)s - %(message)s")
-
-@dataclass
-class LLMConfig:
-    """LLM配置数据类"""
-    api_key: str = os.getenv("SILICONFLOW_API_KEY")
-    api_url: str = os.getenv("API_URL")
-    model_name: str = os.getenv("MODEL_NAME")
-    temperature: float = 0.7
-    timeout: int = 100
-
-@dataclass
-class RAGConfig:
-    """RAG配置数据类"""
-    vector_db_path: str
-    embedding_model_path: str
-    rerank_model_name: str
-    device: str = "cpu"
-    download_mirror: str = "https://hf-mirror.com"
-
-class LLMClient:
-    """LLM客户端封装类"""
-    
-    def __init__(self, config: LLMConfig):
-        self.config = config
-    
-    def query(
-        self,
-        messages: List[Dict[str, str]],
-        stream: bool = False
-    ) -> Union[Generator[str, None, None], str]:
-        """
-        通用LLM查询函数
-        
-        参数:
-            messages: 消息列表
-            stream: 是否流式输出
-            
-        返回:
-            生成器(流式)或字符串(非流式)
-        """
-        try:
-            response = requests.post(
-                self.config.api_url,
-                headers={
-                    "Authorization": f"Bearer {self.config.api_key}",
-                    "Content-Type": "application/json"
-                },
-                json={
-                    "model": self.config.model_name,
-                    "messages": messages,
-                    "temperature": self.config.temperature,
-                    "stream": stream
-                },
-                stream=stream,
-                timeout=self.config.timeout
-            )
-            response.raise_for_status()
-            
-            if stream:
-                return self._handle_stream_response(response)
-            else:
-                return self._handle_non_stream_response(response)
-                
-        except Exception as e:
-            logging.error(f"LLM查询失败: {str(e)}")
-            raise
-    
-    def _handle_stream_response(self, response: requests.Response) -> Generator[str, None, None]:
-        """处理流式响应"""
-        for chunk in response.iter_lines():
-            if chunk:
-                chunk_str = chunk.decode('utf-8')
-                if chunk_str.startswith('data: '):
-                    json_str = chunk_str[6:]
-                    if json_str == "[DONE]":
-                        break
-                    try:
-                        data = json.loads(json_str)
-                        if 'content' in data['choices'][0]['delta']:
-                            content = data['choices'][0]['delta']['content']
-                            yield content
-                    except:
-                        continue
-    
-    def _handle_non_stream_response(self, response: requests.Response) -> str:
-        """处理非流式响应"""
-        data = response.json()
-        return data['choices'][0]['message']['content'].strip()
+from .llm_core import LLMClient, LLMConfig, RAGConfig
 
 class DynamicPromptEngine:
     """动态提示工程主类"""
@@ -206,7 +105,7 @@ class DynamicPromptEngine:
         
     def generate_enhanced_prompt(self, original_query: str, retrieved_template: str) -> Generator[str, None, None]:
         """LLM2: 流式生成增强提示词"""
-        prompt = f"""基于以下原始查询和检索到的提示模板，生成一个优化的LLM提示词：
+        prompt = f"""基于以下原始查询和检索到的提示模板，生成一个优化的LLM提示词:
 
     原始查询: {original_query}
     检索到的提示模板: {retrieved_template}
@@ -217,7 +116,7 @@ class DynamicPromptEngine:
     3. 优化了信息检索和回答质量
     4. 不要过分细化，要保持一定的提示词的泛用性
 
-    生成的最终提示词:（需要注意你只给我最终提示词不用无关信息，之后我将直接将你输出赋给其他大模型作为他的system）"""
+    生成的最终提示词:（需要注意你只给我最终提示词不用无关信息，之后我将直接将你输出赋给其他大模型作为他的systemprompt）"""
         
         messages = [{"role": "user", "content": prompt}]
         response = self.llm.query(messages, stream=True)
@@ -240,23 +139,7 @@ class DynamicPromptEngine:
         """LLM3: 流式生成最终回复"""
         try:
             # 构建系统提示（核心提示工程）
-            system_prompt = f"""你是一个专业智能助手，请严格按照以下要求处理问题：
-            
-            原始输入：
-            {original_query}
-
-            已知知识：
-            {knowledge}
-            
-            增强提示指南：
-            {enhanced_prompt}
-            
-            回答要求：
-            1. 严格基于提供的事实知识
-            2. 遵循增强提示的指导方针
-            3. 保持回答专业且易于理解
-            4. 使用与用户语言一致的语言
-            """
+            system_prompt = enhanced_prompt
             
             # 构建完整的消息历史
             messages = [
@@ -301,7 +184,7 @@ class DynamicPromptEngine:
             logging.info("开始处理查询...")
         
         # 更新对话历史
-        self.conversation_history.append({"role": "user", "content": original_query})
+        #self.conversation_history.append({"role": "user", "content": original_query})
         
         if self.is_first_query:
             if verbose:
@@ -368,6 +251,11 @@ class DynamicPromptEngine:
             logging.info("检索相关知识...")
             print("\n[知识检索]: 进行中...", flush=True)
         knowledge = self.retrieve_knowledge(rewritten_query)
+        user_content_with_knowledge = f"""用户查询: {original_query}
+
+        相关背景知识:
+        {knowledge}"""
+        self.conversation_history.append({"role": "user", "content": user_content_with_knowledge})
         if verbose:
             logging.info(f"检索到的知识: {knowledge[:100]}...")
             print(f"\n[检索到的知识]:\n{knowledge[:200]}...\n", flush=True)
@@ -385,6 +273,9 @@ class DynamicPromptEngine:
         
         # 更新对话历史
         self.conversation_history.append({"role": "assistant", "content": "".join(full_response)})
+        print("\n=== 完整对话历史 ===")
+        for i, msg in enumerate(self.conversation_history):
+            print(f"[{i}] {msg['role']}: {msg['content'][:50]}...")
     
     def reset_conversation(self):
         """重置对话历史"""
@@ -412,40 +303,3 @@ def get_default_configs() -> tuple:
     )
     
     return llm_config, rag_config, prompt_rag_config
-
-def main():
-    """命令行交互主函数"""
-    # 获取项目根目录
-    # 获取配置
-    llm_config, rag_config, prompt_rag_config = get_default_configs()
-    
-    # 初始化引擎
-    engine = DynamicPromptEngine(
-        llm_config=llm_config,
-        rag_config=rag_config,
-        prompt_rag_config=prompt_rag_config,
-        stream_output=True
-    )
-    
-    print("动态提示工程系统已启动 (输入exit退出)")
-    while True:
-        user_input = input("\n你的问题: ").strip()
-        if user_input.lower() in ['exit', 'quit']:
-            break
-        if not user_input:
-            continue
-            
-        try:
-            print("\nAI回复: ", end="", flush=True)
-            for chunk in engine.process_query(user_input, verbose=True):
-                print(chunk, end="", flush=True)
-            print("\n" + "="*50)
-        except Exception as e:
-            logging.error(f"处理查询时出错: {str(e)}")
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n对话已终止")
-        sys.exit(0)
