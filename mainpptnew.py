@@ -1,5 +1,4 @@
 # mainppt.py (新的主函数)
-import os
 import argparse
 from pptgenerate.pipeline import generate_ppt_from_topic  # 假设你将函数移动到这里
 

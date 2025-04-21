@@ -9,3 +9,6 @@ data/*
 # 忽略 model/ 目录下的所有内容
 model/*
 !model/.gitkeep
+
+tests/*
+!tests/.gitkeep
