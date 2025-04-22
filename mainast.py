@@ -59,7 +59,7 @@ class ErrorAnalysisAssistant:
         try:
             response_generator = self.engine.start_conversation(
                 original_query=user_input,
-                verbose=False
+                verbose=True
             )
             
             # 添加处理标记

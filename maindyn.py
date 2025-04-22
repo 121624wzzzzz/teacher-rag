@@ -1,6 +1,7 @@
 import sys
 import logging
 from src.llm.dynamic import DynamicPromptEngine, get_default_configs
+from src.llm.dynamic import DynamicPromptEngine, get_default_configs
 
 def main():
     """命令行交互主函数"""

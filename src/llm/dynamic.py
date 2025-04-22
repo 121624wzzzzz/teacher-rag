@@ -293,10 +293,10 @@ class DynamicPromptEngine:
         
         # 更新对话历史
         self.conversation_history.append({"role": "assistant", "content": "".join(full_response)})
-        if verbose:
-            print("\n=== 完整对话历史 ===")
-            for i, msg in enumerate(self.conversation_history):
-                print(f"[{i}] {msg['role']}: {msg['content'][:1000]}...")
+        # if verbose:
+        #     print("\n=== 完整对话历史 ===")
+        #     for i, msg in enumerate(self.conversation_history):
+        #         print(f"[{i}] {msg['role']}: {msg['content'][:1000]}...")
 
     def process_query(
         self,
@@ -352,3 +352,45 @@ def get_default_configs() -> tuple:
     )
     
     return llm_config, rag_config, prompt_rag_config
+
+def get_knowledge_configs() -> tuple:
+    """获取默认知识库配置"""
+    # LLM配置
+    llm_config = LLMConfig()
+    
+    # 知识库RAG配置
+    knowledge_rag_config = RAGConfig(
+        vector_db_path="data/vector_db",  # 直接相对路径
+        embedding_model_path="model/embeddingmodel",
+        rerank_model_name="model/reranker"
+    )
+    
+    # 提示模板RAG配置
+    prompt_rag_config = RAGConfig(
+        vector_db_path="data/prompts/vector_db",  # 直接相对路径
+        embedding_model_path="model/embeddingmodel",
+        rerank_model_name="model/reranker"
+    )
+    
+    return llm_config, knowledge_rag_config, prompt_rag_config
+
+def get_exercise_configs() -> tuple:
+    """获取默认配置"""
+    # LLM配置
+    llm_config = LLMConfig()
+    
+    # 知识库RAG配置
+    exercise_rag_config = RAGConfig(
+        vector_db_path="data/exercise/vector_db",  # 直接相对路径
+        embedding_model_path="model/embeddingmodel",
+        rerank_model_name="model/reranker"
+    )
+    
+    # 提示模板RAG配置
+    prompt_rag_config = RAGConfig(
+        vector_db_path="data/prompts/vector_db",  # 直接相对路径
+        embedding_model_path="model/embeddingmodel",
+        rerank_model_name="model/reranker"
+    )
+    
+    return llm_config, exercise_rag_config, prompt_rag_config
