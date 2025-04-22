@@ -165,30 +165,27 @@ class DynamicPromptEngine:
                 yield "抱歉，生成回复时出现错误，请稍后再试。"
             return error_generator()
 
-    def process_query(
+    def generate_prompt(
         self,
         original_query: str,
         verbose: bool = False
     ) -> Generator[str, None, None]:
         """
-        完整处理流程
+        生成增强提示词的流程
         
         参数:
             original_query: 用户原始查询
             verbose: 是否输出详细日志
             
         返回:
-            生成器，流式输出响应内容
+            生成器，流式输出提示词生成过程的内容
         """
         if verbose:
-            logging.info("开始处理查询...")
-        
-        # 更新对话历史
-        #self.conversation_history.append({"role": "user", "content": original_query})
+            logging.info("开始生成提示词...")
         
         if self.is_first_query:
             if verbose:
-                logging.info("首次查询，执行完整流程...")
+                logging.info("首次查询，执行完整提示生成流程...")
             
             # 步骤1: 流式查询改写
             if verbose:
@@ -197,7 +194,7 @@ class DynamicPromptEngine:
             rewritten_query_chunks = []
             for chunk in self.rewrite_query(original_query):
                 rewritten_query_chunks.append(chunk)
-                yield chunk  # 将改写结果也流式输出
+                yield chunk
             rewritten_query = "".join(rewritten_query_chunks)
             if verbose:
                 print("\n", end="")
@@ -219,7 +216,7 @@ class DynamicPromptEngine:
             enhanced_prompt_chunks = []
             for chunk in self.generate_enhanced_prompt(original_query, prompt_template):
                 enhanced_prompt_chunks.append(chunk)
-                yield chunk  # 将增强提示也流式输出
+                yield chunk
             enhanced_prompt = "".join(enhanced_prompt_chunks)
             if verbose:
                 print("\n", end="")
@@ -240,11 +237,35 @@ class DynamicPromptEngine:
             rewritten_query_chunks = []
             for chunk in self.rewrite_query(original_query):
                 rewritten_query_chunks.append(chunk)
-                yield chunk  # 将改写结果也流式输出
+                yield chunk
             rewritten_query = "".join(rewritten_query_chunks)
             if verbose:
                 print("\n", end="")
                 logging.info(f"改写后的查询: {rewritten_query}")
+
+    def start_conversation(
+        self,
+        original_query: str,
+        verbose: bool = False
+    ) -> Generator[str, None, None]:
+        """
+        使用设置好的的提示词开始对话
+        
+        参数:
+            original_query: 用户原始查询
+            verbose: 是否输出详细日志
+            
+        返回:
+            生成器，流式输出对话内容
+        """
+        if verbose:
+            logging.info("开始对话流程...")
+        
+        # 改写查询用于知识检索
+        rewritten_query_chunks = []
+        for chunk in self.rewrite_query(original_query):
+            rewritten_query_chunks.append(chunk)
+        rewritten_query = "".join(rewritten_query_chunks)
         
         # 步骤4: 检索相关知识
         if verbose:
@@ -252,7 +273,6 @@ class DynamicPromptEngine:
             print("\n[知识检索]: 进行中...", flush=True)
         knowledge = self.retrieve_knowledge(rewritten_query)
         user_content_with_knowledge = f"""用户查询: {original_query}
-
         相关背景知识:
         {knowledge}"""
         self.conversation_history.append({"role": "user", "content": user_content_with_knowledge})
@@ -273,9 +293,38 @@ class DynamicPromptEngine:
         
         # 更新对话历史
         self.conversation_history.append({"role": "assistant", "content": "".join(full_response)})
-        print("\n=== 完整对话历史 ===")
-        for i, msg in enumerate(self.conversation_history):
-            print(f"[{i}] {msg['role']}: {msg['content'][:50]}...")
+        if verbose:
+            print("\n=== 完整对话历史 ===")
+            for i, msg in enumerate(self.conversation_history):
+                print(f"[{i}] {msg['role']}: {msg['content'][:1000]}...")
+
+    def process_query(
+        self,
+        original_query: str,
+        verbose: bool = False
+    ) -> Generator[str, None, None]:
+        """
+        完整处理流程（整合生成提示词和开始对话）
+        
+        参数:
+            original_query: 用户原始查询
+            verbose: 是否输出详细日志
+            
+        返回:
+            生成器，流式输出响应内容
+        """
+        if verbose:
+            logging.info("开始处理查询...")
+        
+        # 生成提示词部分
+        prompt_generator = self.generate_prompt(original_query, verbose)
+        for chunk in prompt_generator:
+            yield chunk
+        
+        # 开始对话部分
+        conversation_generator = self.start_conversation(original_query, verbose)
+        for chunk in conversation_generator:
+            yield chunk
     
     def reset_conversation(self):
         """重置对话历史"""

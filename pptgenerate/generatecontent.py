@@ -16,7 +16,7 @@ class LLMConfig:
 
 def get_expected_structure() -> Dict[str, Any]:
     """从外部JSON文件加载模板结构"""
-    template_path = os.path.join("pptgenerate", "slide_prompt_template.json")
+    template_path = "data/ppt/jsontemplate/slide_prompt_template.json"# 直接使用相对路径
     try:
         with open(template_path, "r", encoding="utf-8") as f:
             return json.load(f)

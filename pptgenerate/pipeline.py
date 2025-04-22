@@ -11,8 +11,8 @@ def save_json_to_file(json_data: dict, filename: str = None) -> str:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"ppt_content_{timestamp}.json"
     
-    os.makedirs("data/ppt_content", exist_ok=True)
-    filepath = os.path.join("data/ppt_content", filename)
+    os.makedirs("data/ppt/ppt_content", exist_ok=True)
+    filepath = os.path.join("data/ppt/ppt_content", filename)
     
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(json_data, f, ensure_ascii=False, indent=2)
@@ -24,7 +24,7 @@ def generate_ppt_from_topic(
     stream: bool = False,
     bg_image: str = "assets/qh.jpg",
     bg_transparency: float = 0.95,
-    output_dir: str = "data/pptresults"
+    output_dir: str = "data/ppt/pptresults"
 ) -> str:
     """从主题生成PPT的完整流程"""
     # 1. 生成JSON内容

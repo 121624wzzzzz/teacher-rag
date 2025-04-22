@@ -1,4 +1,4 @@
-# mainppt.py (新的主函数)
+# mainpptnew.py (新的主函数)
 import argparse
 from pptgenerate.pipeline import generate_ppt_from_topic  # 假设你将函数移动到这里
 
@@ -13,7 +13,7 @@ def main():
                        help="背景图片路径")
     parser.add_argument("--transparency", type=float, default=0.95,
                        help="背景透明度(0-1)")
-    parser.add_argument("--output_dir", default="data/pptresults",
+    parser.add_argument("--output_dir", default="data/ppt/pptresults",
                        help="输出目录路径")
     
     args = parser.parse_args()
