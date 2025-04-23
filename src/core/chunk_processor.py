@@ -62,9 +62,9 @@ class OptimizedHybridSplitter:
 
     def _bert_embedding(self, text):
         inputs = tokenizer(text, 
-                          return_tensors="pt", 
-                          max_length=512, 
-                          truncation=True)
+                        return_tensors="pt", 
+                        max_length=512, 
+                        truncation=True)
         outputs = model(**inputs)
         return outputs.last_hidden_state.mean(dim=1).numpy()
 

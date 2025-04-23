@@ -125,19 +125,20 @@ def generate_and_validate_json(topic: str, stream: bool = False) -> Optional[Dic
     expected_structure_str = json.dumps(expected_structure, ensure_ascii=False, indent=2)
     
     prompt = f"""
-    作为一个专业的演示文稿内容创作者，请你为我创建一个关于"{topic}"的结构化内容。
+    作为一个专业的演示文稿内容创作者，请你为我创建一个关于描述"{topic}"的结构化内容。
     
     请严格按照以下JSON格式输出，确保内容逻辑清晰、结构合理：
     
     {expected_structure_str}
     
-    请根据此结构，为主题"{topic}"创建内容。
-    请确保内容准确、专业，围绕"{topic}"进行全面阐述。
-    JSON格式必须严格遵守，不要出现格式错误，这非常重要。
+    请根据此结构，为描述创建内容。
+    请确保内容准确、专业，围绕描述进行全面阐述。
+    JSON格式必须严格遵守，不要出现格式错误，这非常重要!!!
     每个幻灯片必须包含type字段，键名不要随意更改。
     常见的幻灯片类型有: cover（封面）, toc（目录）, section（章节）, content（内容）, timeline（时间线）, comparison（比较）, thank_you（感谢）等,
     其中cover（封面）, toc（目录），thank_you（感谢）等是全文的，
-    section（章节）, content（内容）, timeline（时间线）, comparison（比较）则是用来讲述各个模块内容的组成页。
+    section（章节）, content（内容）, timeline（时间线）, comparison（比较）则是用来构成各个分节部分的组成页，一个分节可以有多个组成页，
+    尽可能在你忠于我原本描述的前提下保证幻灯片丰富，充实。
     """
     
     # 调用LLM生成内容

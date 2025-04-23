@@ -21,7 +21,7 @@ class LLMConfig:
     api_url: str = os.getenv("API_URL")
     model_name: str = os.getenv("MODEL_NAME")
     temperature: float = 0.7
-    timeout: int = 100
+    timeout: int = 1000
 
 @dataclass
 class RAGConfig:

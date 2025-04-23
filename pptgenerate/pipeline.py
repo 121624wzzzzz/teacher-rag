@@ -44,7 +44,9 @@ def generate_ppt_from_topic(
     # 4. 生成PPT
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    ppt_filename = f"{topic.replace(' ', '_')}_{timestamp}.pptx"
+    max_topic_length = 20  # 内部固定值，不暴露为参数
+    short_topic = topic[:max_topic_length].replace(' ', '_')
+    ppt_filename = f"{short_topic}_{timestamp}.pptx"
     ppt_path = os.path.join(output_dir, ppt_filename)
     
     print("\n正在生成PPT演示文稿...")
