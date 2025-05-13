@@ -13,7 +13,7 @@ from maindouble import LearningAssistantSystem
 import uvicorn
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
-
+import os
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
@@ -287,6 +287,7 @@ async def get_user_status(user_id: str):
     raise HTTPException(status_code=404, detail="用户未找到")
 
 if __name__ == "__main__":
+    
     try:
         port = find_available_port(8000)
         logger.info(f"🌐 启动服务器 0.0.0.0:{port}")

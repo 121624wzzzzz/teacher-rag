@@ -14,7 +14,7 @@ import uvicorn
 import asyncio
 from concurrent.futures import ProcessPoolExecutor
 import os
-from asyncio import Lock
+from concurrent.futures import ThreadPoolExecutor
 
 # 配置日志
 logging.basicConfig(
@@ -25,7 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # 全局进程池
-process_pool = ProcessPoolExecutor()
+process_pool = ThreadPoolExecutor() 
 
 # 应用程序生命周期管理
 @asynccontextmanager
@@ -77,9 +77,8 @@ class AnalysisResponse(BaseModel):
     status: str = "completed"
     processing_time_ms: Optional[int] = None
 
-# 用户会话存储 (线程安全)
+# 用户会话存储
 user_sessions: Dict[str, dict] = {}
-user_sessions_lock = Lock()
 
 # 工具函数
 def generate_id(prefix: str = "") -> str:
@@ -117,14 +116,13 @@ async def full_analysis_stream(request: AnalysisRequest):
     if not request.error_description.strip():
         raise HTTPException(status_code=400, detail="错题描述不能为空")
     
-    # 初始化用户会话 (线程安全)
-    async with user_sessions_lock:
-        if user_id not in user_sessions:
-            user_sessions[user_id] = {
-                "current_analysis": request.error_description[:100] + "...",
-                "request_count": 0
-            }
-        user_sessions[user_id]["request_count"] += 1
+    # 初始化用户会话
+    if user_id not in user_sessions:
+        user_sessions[user_id] = {
+            "current_analysis": request.error_description[:100] + "...",
+            "request_count": 0
+        }
+    user_sessions[user_id]["request_count"] += 1
     
     logger.info(f"📩 收到分析请求 [user={user_id}, req={request_id}]")
 
@@ -189,9 +187,8 @@ async def full_analysis_stream(request: AnalysisRequest):
                 }
             }) + "\n"
         finally:
-            # 更新用户会话状态 (线程安全)
-            async with user_sessions_lock:
-                user_sessions[user_id]["current_analysis"] = None
+            # 更新用户会话状态
+            user_sessions[user_id]["current_analysis"] = None
 
     return StreamingResponse(
         analysis_generator(),
@@ -217,14 +214,13 @@ async def full_analysis_sync(request: AnalysisRequest):
     if not request.error_description.strip():
         raise HTTPException(status_code=400, detail="错题描述不能为空")
     
-    # 初始化用户会话 (线程安全)
-    async with user_sessions_lock:
-        if user_id not in user_sessions:
-            user_sessions[user_id] = {
-                "current_analysis": request.error_description[:100] + "...",
-                "request_count": 0
-            }
-        user_sessions[user_id]["request_count"] += 1
+    # 初始化用户会话
+    if user_id not in user_sessions:
+        user_sessions[user_id] = {
+            "current_analysis": request.error_description[:100] + "...",
+            "request_count": 0
+        }
+    user_sessions[user_id]["request_count"] += 1
     
     logger.info(f"📩 收到同步分析请求 [user={user_id}, req={request_id}]")
 
@@ -266,9 +262,8 @@ async def full_analysis_sync(request: AnalysisRequest):
             }
         )
     finally:
-        # 更新用户会话状态 (线程安全)
-        async with user_sessions_lock:
-            user_sessions[user_id]["current_analysis"] = None
+        # 更新用户会话状态
+        user_sessions[user_id]["current_analysis"] = None
 
 # 辅助API
 @app.get("/health")
@@ -284,31 +279,34 @@ async def health_check():
 @app.get("/users/{user_id}/status")
 async def get_user_status(user_id: str):
     """获取用户状态"""
-    async with user_sessions_lock:
-        if user_id in user_sessions:
-            return {
-                "user_id": user_id,
-                "status": "active" if user_sessions[user_id]["current_analysis"] else "idle",
-                "request_count": user_sessions[user_id]["request_count"],
-                "current_analysis": user_sessions[user_id]["current_analysis"]
-            }
+    if user_id in user_sessions:
+        return {
+            "user_id": user_id,
+            "status": "active" if user_sessions[user_id]["current_analysis"] else "idle",
+            "request_count": user_sessions[user_id]["request_count"],
+            "current_analysis": user_sessions[user_id]["current_analysis"]
+        }
     raise HTTPException(status_code=404, detail="用户未找到")
 
 if __name__ == "__main__":
-    
     try:
-        port = find_available_port(8000)
+        # 方案1: 直接指定端口，不再动态寻找
+
+        
+        # 方案2: 如果需要动态寻找，但想从不同起始端口开始
+        port = find_available_port(8000)  # 从8000开始寻找
+        
         logger.info(f"🌐 启动服务器 0.0.0.0:{port}")
         
-        # 使用模块导入方式启动
+        # 修正模块名为当前文件名
         uvicorn.run(
-            "teachersever:app",  # 模块名:应用变量名
+            "fastsever:app",  # 修改为正确的当前文件名
             host="0.0.0.0", 
             port=port,
-            workers=4,
-            reload=False,  # 生产环境设为False
+            workers=1,
+            reload=False,
             loop="asyncio",
-            timeout_keep_alive=60
+            timeout_keep_alive=1200  # 减少超时时间为更合理的值
         )
     except Exception as e:
         logger.critical(f"💥 服务器启动失败: {str(e)}")
