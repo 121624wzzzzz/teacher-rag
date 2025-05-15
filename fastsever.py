@@ -90,7 +90,7 @@ def check_port(port: int, host: str = "0.0.0.0") -> bool:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as sock:
         return sock.connect_ex((host, port)) != 0
 
-def find_available_port(base_port: int = 8000, max_tries: int = 10) -> int:
+def find_available_port(base_port: int = 54055, max_tries: int = 5) -> int:
     """自动寻找可用端口"""
     for port in range(base_port, base_port + max_tries):
         if check_port(port):
@@ -294,7 +294,7 @@ if __name__ == "__main__":
 
         
         # 方案2: 如果需要动态寻找，但想从不同起始端口开始
-        port = find_available_port(8000)  # 从8000开始寻找
+        port = find_available_port(54055)  # 从54059开始寻找
         
         logger.info(f"🌐 启动服务器 0.0.0.0:{port}")
         
