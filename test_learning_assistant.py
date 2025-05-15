@@ -14,12 +14,31 @@ def test_user_id():
     return f"test_user_{uuid4().hex[:8]}"
 
 def test_health_check():
-    """测试健康检查接口"""
-    response = requests.get(f"{BASE_URL}/health")
+    """测试健康检查接口（带完整验证）"""
+    # 发送请求
+    response = requests.get(
+        f"{BASE_URL}/health",
+        headers={"Accept": "application/json"},  # 明确要求JSON响应
+        timeout=5
+    )
+    
+    # 验证基础响应
     assert response.status_code == 200
+    assert "application/json" in response.headers["Content-Type"]
+    
+    # 解析并验证响应体
     data = response.json()
-    assert data["status"] == "healthy"
-    assert "version" in data
+    assert data == {
+        "status": "healthy",
+        "version": "2.0.0",  # 需与app.version一致
+        "system": "available",  # 根据实际情况调整
+        "process_pool": "running"
+    }
+    
+    # 验证字段类型
+    assert isinstance(data["version"], str)
+    assert data["system"] in ["available", "unavailable"]
+    assert data["process_pool"] in ["running", "shutdown"]
 
 
 def test_full_analysis_sync(test_user_id):
