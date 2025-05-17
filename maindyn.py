@@ -1,3 +1,4 @@
+#maindyn.py 动态提示工程主函数
 import sys
 import logging
 from src.llm.dynamic import DynamicPromptEngine, get_default_configs

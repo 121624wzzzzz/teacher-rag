@@ -1,4 +1,4 @@
-# maindouble.py
+# maindouble.py 全过程主程序
 import logging
 from typing import Generator, Optional
 from src.llm.dynamic import DynamicPromptEngine, get_knowledge_configs, get_exercise_configs

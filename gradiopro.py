@@ -1,3 +1,4 @@
+#gradio.py gradio版本快速输出
 import gradio as gr
 from maindouble import LearningAssistantSystem, ErrorAnalysisAssistant, ExerciseRecommendationAssistant
 from mainpptnew import generate_ppt_from_topic  # 导入PPT生成函数
