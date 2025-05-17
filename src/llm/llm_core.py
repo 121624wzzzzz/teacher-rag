@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO,
 @dataclass
 class LLMConfig:
     """LLM配置数据类"""
-    api_key: str = os.getenv("SILICONFLOW_API_KEY")
+    api_key: str = os.getenv("DEEPSEEK_API_KEY")
     api_url: str = os.getenv("API_URL")
     model_name: str = os.getenv("MODEL_NAME")
     temperature: float = 0.7
