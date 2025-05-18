@@ -1,7 +1,10 @@
-# maindouble.py 全过程主程序
+# maindop.py 全过程主程序
 import logging
-from typing import Generator, Optional
+import os
+from typing import Generator, Optional, List
 from src.llm.dynamic import DynamicPromptEngine, get_knowledge_configs, get_exercise_configs
+from src.llm.image_text_extractor import ImageTextExtractor
+
 class ErrorAnalysisAssistant:
     """错题分析助手"""
     
@@ -16,7 +19,13 @@ class ErrorAnalysisAssistant:
             prompt_rag_config=prompt_rag_config,
             stream_output=True
         )
-        
+        # 初始化图像文本提取器
+        self.image_extractor = ImageTextExtractor(
+            use_gpu=False,  # 根据实际情况调整
+            lang='ch',
+            conf_threshold=0.5,
+            verbose=False
+        )
         # 预设的系统提示 (专业错题分析模板)
         self.system_prompt = """你是一位经验丰富的学科教育专家，专门负责分析学生的错题。请按照以下要求进行分析：
         
@@ -33,13 +42,42 @@ class ErrorAnalysisAssistant:
 - 学习建议
 - 相关拓展"""
 
-    def analyze_error(self, error_description: str) -> Generator[str, None, None]:
+    def extract_text_from_images(self, image_paths: List[str]) -> str:
+        """
+        从图片中提取文本
+        
+        参数:
+            image_paths: 图片路径列表
+            
+        返回:
+            提取的文本内容
+        """
+        if not image_paths:
+            return ""
+        
+        extracted_texts = []
+        
+        for img_path in image_paths:
+            try:
+                # 使用图像提取器处理图片
+                content = self.image_extractor.get_content_for_llm(img_path)
+                extracted_texts.append(content)
+                
+            except Exception as e:
+                logging.error(f"处理图片失败 {img_path}: {str(e)}")
+                extracted_texts.append(f"图片 {os.path.basename(img_path)} 处理失败: {str(e)}")
+        
+        # 组合所有提取的文本
+        return "\n\n".join(extracted_texts)
+
+    def analyze_error(self, error_description: str, image_paths: Optional[List[str]] = None) -> Generator[str, None, None]:
         """
         分析错题的主方法
         
         参数:
             error_description: 学生的错题描述（题目+错误答案+学生思路）
-            
+            image_paths: 错题图片路径列表（可选）
+
         返回:
             生成器，流式输出分析结果
         """
@@ -47,15 +85,32 @@ class ErrorAnalysisAssistant:
         self.engine.current_enhanced_prompt = self.system_prompt
         self.engine.is_first_query = False  # 跳过提示生成阶段
         
-        # 2. 构建完整的用户输入
+        # 2. 如果提供了图片，处理并提取文本
+        image_content = ""
+        if image_paths and len(image_paths) > 0:
+            try:
+                yield "正在处理图片，提取题目内容...\n"
+                image_content = self.extract_text_from_images(image_paths)
+            except Exception as e:
+                logging.error(f"图片处理失败: {str(e)}")
+                yield f"图片处理时出错: {str(e)}\n"
+        
+        # 3. 构建完整的用户输入
         user_input = f"""请分析以下错题：
         
 【错题描述】
-{error_description}
+{error_description}"""
 
-请按照要求进行专业分析："""
+        # 如果有图片内容，添加到输入中
+        if image_content:
+            user_input += f"""
+
+【图片中识别的内容】
+{image_content}"""
+
+        user_input += "\n\n请按照要求进行专业分析："
         
-        # 3. 开始对话并流式返回结果
+        # 4. 开始对话并流式返回结果
         try:
             response_generator = self.engine.start_conversation(
                 original_query=user_input,
@@ -166,12 +221,13 @@ class LearningAssistantSystem:
         self.error_analyzer = ErrorAnalysisAssistant()
         self.exercise_recommender = ExerciseRecommendationAssistant()
     
-    def full_analysis_pipeline(self, error_description: str) -> Generator[str, None, None]:
+    def full_analysis_pipeline(self, error_description: str, image_paths: Optional[List[str]] = None) -> Generator[str, None, None]:
         """
         完整的分析流程：错题分析 -> 题目推荐
         
         参数:
             error_description: 学生的错题描述
+            image_paths: 错题图片路径列表（可选）
             
         返回:
             生成器，流式输出分析结果和推荐
@@ -179,7 +235,7 @@ class LearningAssistantSystem:
         # 第一阶段：错题分析
         analysis_result = []
         yield "\n=== 第一阶段：错题分析 ===\n"
-        for chunk in self.error_analyzer.analyze_error(error_description):
+        for chunk in self.error_analyzer.analyze_error(error_description, image_paths):
             analysis_result.append(chunk)
             yield chunk
         
@@ -208,16 +264,16 @@ if __name__ == "__main__":
     
     # 示例错题
     sample_error = """
-题目：一个质量为2kg的物体在水平面上受到10N的水平拉力作用，物体与水平面间的动摩擦因数为0.3。求物体的加速度。
-学生答案：a = F/m = 10/2 = 5 m/s²
-错误原因：忽略了摩擦力
-学生思路：直接用牛顿第二定律F=ma计算，忘记考虑摩擦力影响
+以下是我不会的知识点
 """
+    
+    # 示例图片路径（可选）
+    sample_images = ["false.png"]  # 例如 ["path/to/image1.jpg", "path/to/image2.jpg"]
     
     print("正在执行完整分析流程...\n")
     
-    # 方式1：独立使用错题分析
-    # for response in system.error_analyzer.analyze_error(sample_error):
+    # 方式1：独立使用错题分析（带图片）
+    # for response in system.error_analyzer.analyze_error(sample_error, sample_images):
     #     print(response, end="", flush=True)
     
     # 方式2：独立使用题目推荐
@@ -226,6 +282,6 @@ if __name__ == "__main__":
     # ):
     #     print(response, end="", flush=True)
     
-    # 方式3：完整分析流程（错题分析+题目推荐）
-    for response in system.full_analysis_pipeline(sample_error):
+    # 方式3：完整分析流程（错题分析+题目推荐，带图片）
+    for response in system.full_analysis_pipeline(sample_error, sample_images):
         print(response, end="", flush=True)
